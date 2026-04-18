@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VibeOne - Download Ufficiale</title>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --md-bg: #f8f9fa;
+            --md-surface: #ffffff;
+            --md-primary: #1a73e8;
+            --md-text: #1f1f1f;
+            --md-gray-sub: #5f6368;
+            --accent-gradient: linear-gradient(135deg, #1a73e8, #64b5f6);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --md-bg: #121212;
+                --md-surface: #1e1f20;
+                --md-text: #e3e3e3;
+                --md-gray-sub: #9aa0a6;
+            }
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--md-bg);
+            color: var(--md-text);
+            overflow-x: hidden;
+        }
+
+        /* Animazioni */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 24px 40px;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .logo-container {
+            width: 180px; /* Ridimensionato come richiesto */
+            margin: 0 auto 30px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin: 0 0 16px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: var(--md-gray-sub);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        /* Button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--md-primary);
+            color: white;
+            padding: 18px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 18px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(26, 115, 232, 0.4);
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 40px 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--md-surface);
+            padding: 30px;
+            border-radius: 28px;
+            text-align: left;
+            transition: 0.3s;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .feature-card i {
+            font-size: 24px;
+            color: var(--md-primary);
+            margin-bottom: 16px;
+            background: rgba(26, 115, 232, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--md-gray-sub);
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 24px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--md-gray-sub);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 { font-size: 32px; }
+            .logo-container { width: 140px; }
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/Dz554w5Y/Senza-titolo-71-20260417015706.png" alt="VibeOne Logo">
+        </div>
+        <h1>VibeOne Ultimate</h1>
+        <p class="tagline">L'ecosistema completo per messaggistica, news e personalizzazione. Tutto in un'unica app fluida e moderna.</p>
+        
+        <a href="VibeOne.apk" download class="download-btn">
+            <i class="fas fa-download"></i>
+            Scarica VibeOne.apk
+        </a>
+    </section>
+
+    <div class="features">
+        <div class="feature-card">
+            <i class="fas fa-bolt"></i>
+            <h3>Performance Fluid</h3>
+            <p>Interfaccia basata su Material Design 3 per un'esperienza d'uso ultra-rapida su ogni dispositivo.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-fingerprint"></i>
+            <h3>Sicurezza Avanzata</h3>
+            <p>Proteggi il tuo account con la verifica in due fattori (2FA) e crittografia integrata.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fas fa-newspaper"></i>
+            <h3>News in Tempo Reale</h3>
+            <p>Resta aggiornato con il feed notizie intelligente e il widget meteo dinamico integrato.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 VibeOne Ecosystem. Tutti i diritti riservati.</p>
+        <p style="margin-top: 10px; opacity: 0.6; font-size: 12px;">Compatibile con Android 8.0+</p>
+    </footer>
+
+    <script>
+        // Piccola interazione per il tasto download
+        const btn = document.querySelector('.download-btn');
+        btn.addEventListener('click', () => {
+            console.log('Download avviato...');
+        });
+    </script>
+</body>
+</html>
