@@ -3,26 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>VibeOne - Download Ufficiale</title>
+    <title>Vibe Ecosystem 2026</title>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --md-bg: #f8f9fa;
-            --md-surface: #ffffff;
             --md-primary: #1a73e8;
-            --md-text: #1f1f1f;
-            --md-gray-sub: #5f6368;
-            --accent-gradient: linear-gradient(135deg, #1a73e8, #64b5f6);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --md-bg: #121212;
-                --md-surface: #1e1f20;
-                --md-text: #e3e3e3;
-                --md-gray-sub: #9aa0a6;
-            }
+            --md-text-dark: #1f1f1f;
+            --md-text-light: #ffffff;
+            /* Gradienti per il pulsante AI */
+            --ai-btn-grad: linear-gradient(45deg, #00d2ff, #3a7bd5, #8e2de2, #00d2ff);
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -30,180 +20,222 @@
         body {
             margin: 0;
             font-family: 'Google Sans', sans-serif;
-            background-color: var(--md-bg);
-            color: var(--md-text);
+            background-color: #0a192f;
+            color: var(--md-text-light);
             overflow-x: hidden;
         }
 
-        /* Animazioni */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* --- ANIMAZIONI --- */
+        @keyframes floatVertical {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-25px); }
         }
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        @keyframes btnGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* Hero Section */
-        .hero {
-            padding: 80px 24px 40px;
+        /* --- SEZIONE VIBE AI (IMPONENTE E BIANCA) --- */
+        .hero-ai {
+            background: #ffffff;
+            min-height: 85vh; /* Molto più lungo */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 24px;
             text-align: center;
-            animation: fadeInUp 0.8s ease-out;
+            color: var(--md-text-dark);
+            position: relative;
+            z-index: 10;
         }
 
-        .logo-container {
-            width: 180px; /* Ridimensionato come richiesto */
-            margin: 0 auto 30px;
-            animation: float 4s ease-in-out infinite;
+        .logo-ai-box {
+            width: 240px; /* Più grande */
+            margin-bottom: 40px;
+            animation: floatVertical 6s ease-in-out infinite;
         }
 
-        .logo-container img {
+        .logo-ai-box img {
             width: 100%;
-            height: auto;
-            border-radius: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 54px;
+            box-shadow: 0 30px 60px rgba(26, 115, 232, 0.15);
         }
 
-        h1 {
-            font-size: 42px;
+        .hero-ai h1 {
+            font-size: 72px; /* Gigante */
             font-weight: 700;
-            margin: 0 0 16px;
-            background: var(--accent-gradient);
+            margin: 0;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #1a73e8, #000);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .tagline {
-            font-size: 18px;
-            color: var(--md-gray-sub);
+        .tagline-ai {
+            font-size: 22px;
+            color: #5f6368;
             max-width: 600px;
-            margin: 0 auto 40px;
-            line-height: 1.6;
+            margin: 20px auto 40px;
         }
 
-        /* Button */
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--md-primary);
-            color: white;
-            padding: 18px 36px;
-            border-radius: 50px;
+        /* --- IL PULSANTE ANIMATO COLORATO --- */
+        .download-ai {
+            display: inline-block;
+            background: var(--ai-btn-grad);
+            background-size: 300% 300%;
+            color: #fff;
+            padding: 24px 60px;
+            border-radius: 100px;
             text-decoration: none;
-            font-weight: 500;
-            font-size: 18px;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
+            font-weight: 700;
+            font-size: 22px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: btnGradient 6s ease infinite;
+            box-shadow: 0 15px 35px rgba(58, 123, 213, 0.4);
+            border: none;
         }
 
-        .download-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 25px rgba(26, 115, 232, 0.4);
+        .download-ai:hover {
+            transform: scale(1.1);
+            box-shadow: 0 20px 50px rgba(58, 123, 213, 0.6);
         }
 
-        /* Features Grid */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 40px 24px;
-            max-width: 1000px;
+        /* --- TRANSIZIONE VERSO IL BASSO --- */
+        .spacer {
+            height: 120px;
+            background: linear-gradient(180deg, #ffffff 0%, transparent 100%);
+        }
+
+        /* --- SEZIONE VIBE ONE (ECCELLENZA) --- */
+        .vibe-one-section {
+            padding: 40px 24px 100px;
+            text-align: center;
+        }
+
+        .vibe-one-card {
+            max-width: 900px;
             margin: 0 auto;
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .feature-card {
-            background: var(--md-surface);
-            padding: 30px;
-            border-radius: 28px;
-            text-align: left;
+        .logo-vone {
+            width: 100px;
+            margin-bottom: 25px;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+
+        .vone-title {
+            font-size: 36px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .vone-desc {
+            color: #94a3b8;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            font-size: 19px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .download-vone {
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 20px;
+            padding: 15px 30px;
             transition: 0.3s;
-            border: 1px solid rgba(0,0,0,0.03);
         }
 
-        .feature-card i {
-            font-size: 24px;
-            color: var(--md-primary);
-            margin-bottom: 16px;
-            background: rgba(26, 115, 232, 0.1);
-            padding: 12px;
-            border-radius: 12px;
-        }
+        .download-vone:hover { color: #fff; }
 
-        .feature-card h3 {
-            margin: 0 0 10px;
-            font-size: 18px;
-        }
-
-        .feature-card p {
-            margin: 0;
-            font-size: 14px;
-            color: var(--md-gray-sub);
-            line-height: 1.5;
-        }
-
-        /* Footer */
         footer {
-            padding: 60px 24px;
+            padding: 50px;
             text-align: center;
             font-size: 14px;
-            color: var(--md-gray-sub);
+            color: #475569;
         }
 
-        /* Responsive */
+        [data-lang] { display: none; }
+
         @media (max-width: 600px) {
-            h1 { font-size: 32px; }
-            .logo-container { width: 140px; }
+            .hero-ai h1 { font-size: 50px; }
+            .logo-ai-box { width: 180px; }
+            .download-ai { width: 90%; padding: 20px; font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-    <section class="hero">
-        <div class="logo-container">
-            <img src="https://i.postimg.cc/Dz554w5Y/Senza-titolo-71-20260417015706.png" alt="VibeOne Logo">
+    <section class="hero-ai">
+        <div class="logo-ai-box">
+            <img src="https://i.postimg.cc/rzXhjyXr/Senza-titolo-19-20260425162058.png" alt="VibeAI">
         </div>
-        <h1>VibeOne Ultimate</h1>
-        <p class="tagline">L'ecosistema completo per messaggistica, news e personalizzazione. Tutto in un'unica app fluida e moderna.</p>
+
+        <h1>VibeAI</h1>
+
+        <div class="tagline-ai">
+            <p data-lang="it">L'intelligenza generativa più avanzata del 2026. Vivi il futuro adesso.</p>
+            <p data-lang="en">The most advanced generative intelligence of 2026. Experience the future now.</p>
+            <p data-lang="es">La inteligencia generativa más avanzada de 2026. Vive el futuro ahora.</p>
+            <p data-lang="fr">L'intelligence générative la plus avancée de 2026. Vivez le futur maintenant.</p>
+        </div>
         
-        <a href="VibeOne.apk" download class="download-btn">
-            <i class="fas fa-download"></i>
-            Scarica VibeOne.apk
+        <a href="VibeAI.apk" download class="download-ai">
+            <span data-lang="it">Ottieni VibeAI</span>
+            <span data-lang="en">Get VibeAI</span>
+            <span data-lang="es">Obtener VibeAI</span>
+            <span data-lang="fr">Obtenir VibeAI</span>
         </a>
     </section>
 
-    <div class="features">
-        <div class="feature-card">
-            <i class="fas fa-bolt"></i>
-            <h3>Performance Fluid</h3>
-            <p>Interfaccia basata su Material Design 3 per un'esperienza d'uso ultra-rapida su ogni dispositivo.</p>
+    <div class="spacer"></div>
+
+    <section class="vibe-one-section">
+        <div class="vibe-one-card">
+            <img src="https://i.postimg.cc/Dz554w5Y/Senza-titolo-71-20260417015706.png" alt="VibeOne" class="logo-vone">
+            
+            <h2 class="vone-title">VibeOne Ultimate</h2>
+
+            <p class="vone-desc" data-lang="it">Il cuore pulsante del tuo smartphone. Messaggistica, notizie globali e widget meteo in un ecosistema perfetto e completo.</p>
+            <p class="vone-desc" data-lang="en">The heartbeat of your smartphone. Messaging, global news, and weather widgets in a perfect, complete ecosystem.</p>
+            <p class="vone-desc" data-lang="es">El corazón de tu smartphone. Mensajería, noticias globales y widgets de clima en un ecosistema perfecto y completo.</p>
+            <p class="vone-desc" data-lang="fr">Le cœur de votre smartphone. Messagerie, actualités mondiales et widgets météo dans un écosystème parfait et complet.</p>
+
+            <a href="VibeOne.apk" download class="download-vone">
+                <span data-lang="it">Scarica Ecosistema VibeOne</span>
+                <span data-lang="en">Download VibeOne Ecosystem</span>
+                <span data-lang="es">Descargar Ecosistema VibeOne</span>
+                <span data-lang="fr">Télécharger l'écosystème VibeOne</span>
+            </a>
         </div>
-        <div class="feature-card">
-            <i class="fas fa-fingerprint"></i>
-            <h3>Sicurezza Avanzata</h3>
-            <p>Proteggi il tuo account con la verifica in due fattori (2FA) e crittografia integrata.</p>
-        </div>
-        <div class="feature-card">
-            <i class="fas fa-newspaper"></i>
-            <h3>News in Tempo Reale</h3>
-            <p>Resta aggiornato con il feed notizie intelligente e il widget meteo dinamico integrato.</p>
-        </div>
-    </div>
+    </section>
 
     <footer>
-        <p>&copy; 2026 VibeOne Ecosystem. Tutti i diritti riservati.</p>
-        <p style="margin-top: 10px; opacity: 0.6; font-size: 12px;">Compatibile con Android 8.0+</p>
+        <p>&copy; 2026 Vibe Ecosystem &bull; Pure Innovation</p>
     </footer>
 
     <script>
-        // Piccola interazione per il tasto download
-        const btn = document.querySelector('.download-btn');
-        btn.addEventListener('click', () => {
-            console.log('Download avviato...');
-        });
+        function autoTranslate() {
+            const navLang = navigator.language || navigator.userLanguage;
+            let lang = navLang.split('-')[0];
+            const supported = ['it', 'en', 'es', 'fr'];
+            if (!supported.includes(lang)) lang = 'en';
+
+            document.querySelectorAll(`[data-lang="${lang}"]`).forEach(el => {
+                el.style.display = (el.tagName === 'P' || el.tagName === 'DIV') ? 'block' : 'inline-block';
+            });
+        }
+        window.onload = autoTranslate;
     </script>
 </body>
 </html>
