@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Realm Hub Animated</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #00e676;
+            --bg: #0f0f0f;
+            --surface: #1e1e1e;
+            --text-main: #ffffff;
+            --shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMAZIONI --- */
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes scrollBg { from { background-position: 0 0; } to { background-position: 120px 120px; } }
+        
+        /* --- HEADER --- */
+        header {
+            background-color: var(--surface); padding: 16px 20px;
+            box-shadow: 0; position: sticky; top: 0; z-index: 10;
+            display: flex; justify-content: space-between; align-items: center;
+            animation: slideDown 0.4s ease-out;
+        }
+        .app-title { font-size: 22px; font-weight: 700; color: var(--primary); letter-spacing: 1px; }
+        
+        .profile-btn {
+            background: #333; border-radius: 50%; width: 40px; height: 40px;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; overflow: hidden; border: 2px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        .profile-btn:active { transform: scale(0.9); }
+        .profile-btn img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+
+        /* --- TABS --- */
+        .tabs { display: flex; background: var(--surface); box-shadow: var(--shadow); }
+        .tab {
+            flex: 1; text-align: center; padding: 16px; font-weight: 700;
+            color: #888; border-bottom: 3px solid transparent; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        /* --- FEED E CARDS ANIMATE --- */
+        #main-feed { padding: 12px; padding-bottom: 90px; display: flex; flex-direction: column; gap: 16px; }
+        
+        .card {
+            border-radius: 12px; position: relative; overflow: hidden;
+            box-shadow: var(--shadow); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            transition: transform 0.2s;
+        }
+        .card:active { transform: scale(0.98); }
+
+        /* Overlay scuro per leggere il testo sopra gli sfondi animati */
+        .card-overlay {
+            background: rgba(0, 0, 0, 0.7); /* Sfondo semi-trasparente */
+            padding: 16px; width: 100%; height: 100%; backdrop-filter: blur(2px);
+        }
+
+        /* TEMI MINERALI CON SFONDI ANIMATI */
+        .theme-iron { background-color: #7f8c8d; color: white; border: 0px solid #bdc3c7; }
+        .theme-gold { background-color: #d4af37; color: white; border: 0px solid #f1c40f; }
+        .theme-diamond { background-color: #00b8d4; color: white; border: 0px solid #18ffff; }
+        .theme-emerald { background-color: #00c853; color: white; border: 0px solid #69f0ae; }
+        .theme-redstone { background-color: #c0392b; color: white; border: 0px solid #e74c3c; }
+        .theme-netherite { background-color: #2c3e50; color: white; border: 0px solid #1a252f; }
+
+        /* Generatore di particelle per ogni materiale (fluttuano dietro) */
+        .theme-iron { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 8s linear infinite; }
+        .theme-gold { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 8s linear infinite; }
+        .theme-diamond { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 10s linear infinite; }
+        .theme-emerald { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 9s linear infinite; }
+        .theme-redstone { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 7s linear infinite; }
+        .theme-netherite { background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E%3C/text%3E%3C/svg%3E"); animation: scrollBg 12s linear infinite; }
+
+        .pin-badge { position: absolute; top: 12px; right: 16px; color: #ffeb3b; font-size: 14px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 2; }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .avatar { width: 45px; height: 45px; border-radius: 8px; image-rendering: pixelated; border: 2px solid rgba(255,255,255,0.3); }
+        .username { font-weight: 700; font-size: 18px; cursor: pointer; text-shadow: 1px 1px 2px #000; }
+        .card-content { font-size: 15px; line-height: 1.5; text-shadow: 1px 1px 2px #000; }
+        .card-img { width: 100%; margin-top: 12px; border-radius: 8px; max-height: 300px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); }
+
+        /* --- FLOATING ACTION BUTTON --- */
+        .fab {
+            position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; border-radius: 30px;
+            background: var(--primary); color: #000; font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 15px rgba(0,230,118,0.4); border: none; cursor: pointer; z-index: 100;
+            transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* --- MODALI --- */
+        .dialog-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .dialog {
+            background: var(--surface); width: 90%; max-width: 400px;
+            border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            animation: popIn 0.3s forwards;
+        }
+        .dialog-title { font-size: 22px; font-weight: 700; margin: 0 0 20px 0; color: var(--primary); }
+
+        input, textarea, select {
+            width: 100%; padding: 14px; margin-bottom: 16px; border-radius: 8px;
+            background: #2a2a2a; border: 1px solid #444; color: white; 
+            font-family: 'Roboto', sans-serif; font-size: 16px; outline: none; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--primary); }
+        .help-text { font-size: 12px; color: #888; margin-top: -12px; margin-bottom: 16px; display: block; }
+
+        .btn {
+            background: transparent; color: white; border: none; padding: 12px 20px;
+            font-size: 16px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: 0.2s;
+        }
+        .btn-raised { background: var(--primary); color: #000; }
+        .btn-raised:active { transform: scale(0.95); }
+        .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; }
+
+        /* --- LISTA COLORI --- */
+        .color-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .color-option {
+            background: #2a2a2a; padding: 16px; border-radius: 8px; display: flex; align-items: center; gap: 16px;
+            cursor: pointer; font-weight: 700; transition: 0.2s; border: 2px solid transparent;
+        }
+        .color-option:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="app-title">Vanilla Hub</div>
+    <div class="profile-btn" onclick="openModal('profile-dialog')">
+        <img id="header-avatar" src="https://mc-heads.net/avatar/steve/64" alt="Profilo">
+    </div>
+</header>
+
+<div class="tabs">
+    <div class="tab active" onclick="setFilter('all', this)">FEED GLOBALE</div>
+    <div class="tab" onclick="setFilter('pinned', this)">IN EVIDENZA</div>
+</div>
+
+<div id="main-feed"></div>
+
+<button class="fab" onclick="openModal('post-dialog')"><i class="fas fa-plus"></i></button>
+
+<div id="profile-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2 class="dialog-title" id="profile-title">Il tuo Profilo</h2>
+        
+        <label>Nome Visualizzato:</label>
+        <input type="text" id="display-name-input" placeholder="Es: Re Artù">
+        
+        <label>Username Minecraft (per la Skin):</label>
+        <input type="text" id="skin-name-input" placeholder="Es: Dream">
+        <span class="help-text">Puoi inserire il nome di qualsiasi utente per "rubare" la sua skin!</span>
+        
+        <div class="dialog-actions">
+            <button class="btn" onclick="closeModal('profile-dialog')" id="btn-cancel-profile" style="display:none;">Annulla</button>
+            <button class="btn btn-raised" onclick="saveProfile()">Salva & Entra</button>
+        </div>
+    </div>
+</div>
+
+<div id="post-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2 class="dialog-title">Nuovo Annuncio</h2>
+        <textarea id="post-content" rows="4" placeholder="Condividi qualcosa col server..."></textarea>
+        
+        <select id="pin-duration">
+            <option value="0">Nessun Pin (Post normale)</option>
+            <option value="24">Fissa in alto per 24 ore</option>
+            <option value="48">Fissa in alto per 48 ore</option>
+        </select>
+        
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+            <button class="btn" style="background: #2a2a2a;" onclick="document.getElementById('file-input').click()">
+                <i class="fas fa-camera"></i> Allega Foto
+            </button>
+            <span id="file-name" style="font-size: 14px; color: var(--primary); display: none;">Immagine Pronta </span>
+        </div>
+        <input type="file" id="file-input" hidden accept="image/*" onchange="handleFile(event)">
+        
+        <div class="dialog-actions">
+            <button class="btn" onclick="closeModal('post-dialog')">Annulla</button>
+            <button class="btn btn-raised" onclick="submitPost()" id="send-btn">Invia</button>
+        </div>
+    </div>
+</div>
+
+<div id="color-dialog" class="dialog-overlay">
+    <div class="dialog">
+        <h2 class="dialog-title">Stile Card</h2>
+        <span class="help-text">Scegli il materiale. Cambierà il look di tutti i tuoi post!</span>
+        <div class="color-list" id="color-options-list"></div>
+        <div class="dialog-actions">
+            <button class="btn" onclick="closeModal('color-dialog')">Chiudi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // ATTENZIONE: INSERISCI LE TUE CHIAVI QUI!
+    // ==========================================
+    const SUPABASE_URL = 'https://mgofkzcnppsydkknbuhw.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable_tC8Z0ewOX4U1Xh0lST9gKQ_yWLcN67j'; 
+    
+    let sb;
+    try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { console.warn("Supabase assente"); }
+
+    let displayName = localStorage.getItem('realm_display_name');
+    let skinName = localStorage.getItem('realm_skin_name') || 'steve';
+    let base64Image = null;
+    let currentFilter = 'all';
+
+    const MATERIALS = {
+        iron: { name: 'Card di Ferro', theme: 'theme-iron', icon: '' },
+        gold: { name: 'Card d\'Oro', theme: 'theme-gold', icon: '' },
+        diamond: { name: 'Card di Diamante', theme: 'theme-diamond', icon: '' },
+        emerald: { name: 'Card di Smeraldo', theme: 'theme-emerald', icon: '' },
+        redstone: { name: 'Card Redstone', theme: 'theme-redstone', icon: '' },
+        netherite: { name: 'Card Netherite', theme: 'theme-netherite', icon: '' }
+    };
+
+    function init() {
+        if(SUPABASE_URL === 'INSERISCI_QUI_URL') {
+            alert("Ricordati di inserire i dati di Supabase nel codice HTML per salvare i messaggi!");
+        }
+
+        // Genera lista materiali
+        const cList = document.getElementById('color-options-list');
+        cList.innerHTML = '';
+        Object.keys(MATERIALS).forEach(key => {
+            cList.innerHTML += `
+                <div class="color-option ${MATERIALS[key].theme}" onclick="changeCardTheme('${key}')">
+                    <span style="font-size: 24px;">${MATERIALS[key].icon}</span>
+                    <span>${MATERIALS[key].name}</span>
+                </div>`;
+        });
+
+        if (displayName) {
+            updateHeaderAvatar();
+            loadPosts();
+        } else {
+            openModal('profile-dialog');
+            document.getElementById('profile-title').innerText = "Benvenuto!";
+        }
+    }
+
+    function updateHeaderAvatar() {
+        // Usa il nome per la skin
+        document.getElementById('header-avatar').src = `https://mc-heads.net/avatar/${skinName}/64`;
+    }
+
+    function openModal(id) { 
+        document.getElementById(id).style.display = 'flex'; 
+        if(id === 'profile-dialog' && displayName) {
+            document.getElementById('display-name-input').value = displayName;
+            document.getElementById('skin-name-input').value = skinName;
+            document.getElementById('btn-cancel-profile').style.display = 'inline-block';
+            document.getElementById('profile-title').innerText = "Modifica Profilo";
+        }
+    }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function saveProfile() {
+        const dName = document.getElementById('display-name-input').value.trim();
+        const sName = document.getElementById('skin-name-input').value.trim() || 'steve';
+        
+        if(dName) {
+            displayName = dName;
+            skinName = sName;
+            localStorage.setItem('realm_display_name', displayName);
+            localStorage.setItem('realm_skin_name', skinName);
+            
+            updateHeaderAvatar();
+            closeModal('profile-dialog');
+            loadPosts();
+        } else {
+            alert("Il nome visualizzato è obbligatorio!");
+        }
+    }
+
+    // Compressione Foto
+    function handleFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let w = img.width, h = img.height;
+                const max = 800; 
+                if (w > h) { if (w > max) { h *= max / w; w = max; } } else { if (h > max) { w *= max / h; h = max; } }
+                canvas.width = w; canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                base64Image = canvas.toDataURL('image/jpeg', 0.7);
+                document.getElementById('file-name').style.display = 'inline';
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function loadPosts() {
+        if (!sb) return;
+        const feed = document.getElementById('main-feed');
+        feed.innerHTML = '<div style="text-align:center; padding: 20px;">Caricamento database...</div>';
+
+        const { data, error } = await sb.from('realm_db')
+            .select('*')
+            .order('pinned_until', { ascending: false, nullsFirst: false })
+            .order('created_at', { ascending: false });
+
+        feed.innerHTML = '';
+        if(data) {
+            data.forEach(post => {
+                const isPinned = post.pinned_until && new Date(post.pinned_until) > new Date();
+                if (currentFilter === 'pinned' && !isPinned) return;
+                renderPost(post, isPinned);
+            });
+        }
+    }
+
+    function renderPost(post, isPinned) {
+        const feed = document.getElementById('main-feed');
+        const card = document.createElement('div');
+        
+        // Applica il tema della card
+        const themeClass = MATERIALS[post.user_color] ? MATERIALS[post.user_color].theme : 'theme-iron';
+        card.className = `card ${themeClass}`;
+        
+        // Risolvi immagine skin usando il skin_model (che ora contiene il nome della skin)
+        const skinUrl = `https://mc-heads.net/avatar/${post.skin_model || 'steve'}/64`;
+
+        card.innerHTML = `
+            ${isPinned ? '<div class="pin-badge"><i class="fas fa-thumbtack"></i> PIN </div>' : ''}
+            <div class="card-overlay">
+                <div class="card-header">
+                    <img src="${skinUrl}" class="avatar">
+                    <div>
+                        <div class="username" oncontextmenu="openColorPicker(event, '${post.username}')" ontouchstart="handleLongPress(event, '${post.username}')">
+                            ${post.username}
+                        </div>
+                        <div style="font-size: 11px; opacity: 0.8;">
+                            ${new Date(post.created_at).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'})}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content">${post.content.replace(/\n/g, '<br>')}</div>
+                ${post.image_url ? `<img src="${post.image_url}" class="card-img" loading="lazy">` : ''}
+            </div>
+        `;
+        feed.appendChild(card);
+    }
+
+    async function submitPost() {
+        if (!sb) return;
+        const content = document.getElementById('post-content').value;
+        const pinHours = parseInt(document.getElementById('pin-duration').value);
+        const btn = document.getElementById('send-btn');
+        
+        if (!content.trim()) return;
+
+        btn.disabled = true; btn.innerText = "Invio...";
+
+        let pinnedUntil = null;
+        if(pinHours > 0) pinnedUntil = new Date(Date.now() + pinHours * 60 * 60 * 1000).toISOString();
+
+        // user_color dal localstorage, se non c'è usa iron
+        const color = localStorage.getItem('realm_theme') || 'iron';
+
+        const { error } = await sb.from('realm_db').insert([{
+            username: displayName,
+            content: content,
+            image_url: base64Image,
+            user_color: color,
+            skin_model: skinName, // Salviamo il nome della skin qui
+            pinned_until: pinnedUntil
+        }]);
+
+        if(!error) {
+            closeModal('post-dialog');
+            document.getElementById('post-content').value = '';
+            base64Image = null;
+            document.getElementById('file-name').style.display = 'none';
+            loadPosts();
+        }
+        btn.disabled = false; btn.innerText = "Invia";
+    }
+
+    // --- LOGICA CAMBIO MATERIALE ---
+    let pressTimer;
+    function handleLongPress(e, authorName) {
+        pressTimer = window.setTimeout(() => openColorPicker(e, authorName), 800);
+    }
+    window.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+    function openColorPicker(e, authorName) {
+        e.preventDefault();
+        // Permetti di cambiare tema solo se stai toccando il TUO nome
+        if (authorName !== displayName) return; 
+        openModal('color-dialog');
+    }
+
+    async function changeCardTheme(themeKey) {
+        localStorage.setItem('realm_theme', themeKey);
+        closeModal('color-dialog');
+        
+        // AGGIORNAMENTO MAGICO: Aggiorna il database per cambiare il colore a TUTTI i tuoi vecchi messaggi!
+        if(sb) {
+            await sb.from('realm_db').update({ user_color: themeKey }).eq('username', displayName);
+            loadPosts(); // Ricarica il feed per vedere i cambiamenti
+        }
+    }
+
+    function setFilter(type, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        currentFilter = type;
+        loadPosts();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
