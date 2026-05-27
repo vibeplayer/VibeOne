@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VibeDrive - Riscatta Bonus</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Google Sans', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Contenitore Principale */
+        .bonus-container {
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        /* Immagine Sponsor */
+        .sponsor-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+        }
+
+        .sponsor-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 5px;
+        }
+
+        .sponsor-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00e6f0;
+            margin-bottom: 25px;
+            text-shadow: 0 0 10px rgba(0, 230, 240, 0.3);
+        }
+
+        /* Box Stato/Risultato */
+        .status-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 30px 20px;
+            border-radius: 28px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .status-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .status-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        /* Bottone per tornare al Drive */
+        .btn-back {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 24px;
+            background: #ffffff;
+            color: #000000;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .btn-back:active {
+            transform: scale(0.95);
+        }
+
+        /* Sfondo Aurora (Coerente con il tuo stile) */
+        #auroraCanvas {
+            position: fixed; inset: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: -1; opacity: 0.25;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="auroraCanvas"></canvas>
+
+    <div class="bonus-container">
+        <img src="https://i.postimg.cc/85ndn8ty/Screenshot-20260525-191117.jpg" alt="Sponsor Image" class="sponsor-img">
+        
+        <div class="sponsor-text">sponsorizzato da</div>
+        <div class="sponsor-name">☆♥︎𝑫𝒆𝒍𝒊&𝑭𝒓𝒂♥︎☆</div>
+
+        <div class="status-box">
+            <div id="bonusIcon" class="status-icon"><i class="fas fa-spinner fa-spin"></i></div>
+            <div id="bonusTitle" class="status-title">Verifica in corso...</div>
+            <div id="bonusDesc" class="status-desc">Stiamo verificando i dati del tuo account VibeDrive.</div>
+            <a href="drive.html" id="backBtn" class="btn-back" style="display: none;">Vai al tuo Drive</a>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione Supabase (Identica al tuo script principale)
+        const SUPABASE_URL = 'https://mgofkzcnppsydkknbuhw.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_tC8Z0ewOX4U1Xh0lST9gKQ_yWLcN67j';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const bonusIcon = document.getElementById('bonusIcon');
+        const bonusTitle = document.getElementById('bonusTitle');
+        const bonusDesc = document.getElementById('bonusDesc');
+        const backBtn = document.getElementById('backBtn');
+
+        async function elaboraBonus() {
+            // 1. Controllo Sessione Utente
+            const sessionData = localStorage.getItem('userSession');
+            if (!sessionData) {
+                // Se non trova l'account, porta alla schermata di login dopo 1.5 secondi
+                bonusIcon.innerHTML = `<i class="fas fa-user-slash" style="color: #ff5252;"></i>`;
+                bonusTitle.innerText = "Accesso richiesto";
+                bonusDesc.innerText = "Nessun account collegato. Verrai reindirizzato alla pagina di accesso...";
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            const userSession = JSON.parse(sessionData);
+            const username = userSession.username;
+
+            try {
+                // 2. Controllo dati attuali su Supabase
+                const { data: user, error: fetchError } = await sb
+                    .from('users')
+                    .select('memory')
+                    .eq('username', username)
+                    .single();
+
+                if (fetchError || !user) {
+                    throw new Error("Impossibile recuperare i dati dell'utente.");
+                }
+
+                // Imposta il valore di default a 5 se per qualche motivo nel DB è vuoto
+                let memoriaAttuale = user.memory !== undefined && user.memory !== null ? user.memory : 5;
+
+                // 3. Controllo: se ha già più di 5MB ha già riscattato il codice o non ha i requisiti
+                if (memoriaAttuale > 5) {
+                    bonusIcon.innerHTML = `<i class="fas fa-info-circle" style="color: #ffb300;"></i>`;
+                    bonusTitle.innerText = "Già riscattato!";
+                    bonusDesc.innerText = `L'account "${username}" ha già ottenuto questo bonus o dispone già di ${memoriaAttuale}MB.`;
+                    backBtn.style.display = "inline-block";
+                    return;
+                }
+
+                // 4. Esecuzione del riscatto (+10MB gratuiti, totale 15MB)
+                const nuovaMemoria = memoriaAttuale + 10;
+                const { error: updateError } = await sb
+                    .from('users')
+                    .update({ memory: nuovaMemoria })
+                    .eq('username', username);
+
+                if (updateError) throw updateError;
+
+                // Successo
+                bonusIcon.innerHTML = `<i class="fas fa-gift" style="color: #00e6f0; animation: pulse 1s infinite alternate;"></i>`;
+                bonusTitle.innerText = "10MB Ricevuti!";
+                bonusDesc.innerText = `Complimenti! Il bonus di ☆♥︎𝑫𝒆𝒍𝒊&𝑭𝒓𝒂♥︎☆ è attivo. La tua memoria è stata aggiornata a ${nuovaMemoria}MB.`;
+                backBtn.style.display = "inline-block";
+
+            } catch (error) {
+                bonusIcon.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #ff5252;"></i>`;
+                bonusTitle.innerText = "Errore di connessione";
+                bonusDesc.innerText = "Si è verificato un problema durante l'accredito del bonus. Riprova più tardi.";
+                backBtn.style.display = "inline-block";
+                console.error(error);
+            }
+        }
+
+        // --- MOTORE ANIMAZIONE AURORA DI SFONDO ---
+        const auroraCanvas = document.getElementById('auroraCanvas');
+        const auroraCtx = auroraCanvas.getContext('2d');
+        let auroraT = 0;
+        const AURORA_COLORS = [[124, 58, 237], [0, 230, 240], [147, 51, 234]];
+        const AURORA_WAVES = [
+            { bx:0.2, by:0.3, phase:0.0, sp:0.0003, ci:0 },
+            { bx:0.7, by:0.2, phase:1.5, sp:0.0004, ci:1 },
+            { bx:0.5, by:0.4, phase:3.0, sp:0.0002, ci:2 }
+        ];
+
+        function resizeCanvas() {
+            auroraCanvas.width = window.innerWidth;
+            auroraCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function renderAurora(ts) {
+            auroraT = ts * 0.001;
+            const w = auroraCanvas.width, h = auroraCanvas.height;
+            auroraCtx.clearRect(0, 0, w, h);
+            AURORA_WAVES.forEach((wv, i) => {
+                const [r,g,b] = AURORA_COLORS[wv.ci];
+                const cx = (wv.bx + Math.sin(auroraT * wv.sp * 1500 + wv.phase) * 0.1) * w;
+                const cy = (wv.by + Math.sin(auroraT * wv.sp * 1200 + wv.phase) * 0.1) * h;
+                const rx = w * 0.7;
+                const ry = h * 0.5;
+                const al = 0.15;
+
+                const grad = auroraCtx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+                grad.addColorStop(0, `rgba(${r},${g},${b},${al})`);
+                grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+
+                auroraCtx.save(); auroraCtx.scale(1, ry / rx); auroraCtx.fillStyle = grad;
+                auroraCtx.beginPath(); auroraCtx.arc(cx, cy * (rx / ry), rx, 0, Math.PI * 2); auroraCtx.fill(); auroraCtx.restore();
+            });
+            requestAnimationFrame(renderAurora);
+        }
+
+        // Avvio complessivo al caricamento della pagina
+        window.addEventListener('DOMContentLoaded', () => {
+            resizeCanvas();
+            requestAnimationFrame(renderAurora);
+            // Ritardo di mezzo secondo per rendere l'esperienza fluida e simulare il caricamento
+            setTimeout(elaboraBonus, 600);
+        });
+    </script>
+</body>
+</html>
