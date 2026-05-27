@@ -2,194 +2,235 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Login App Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Vibe Login</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --bg-color: #050505; 
-            --text-main: #ffffff;
-            --text-sub: #888888;
-            --accent: #3b82f6; 
-            --accent-glow: rgba(59, 130, 246, 0.4);
-            --input-bg: #0d0d0f;
-            --card-bg: #0d0d0f;
-            --error: #ef4444;
+            --bg: #fdfdfd;
+            --surface: #ffffff;
+            --primary: #1f1f1f;
+            --text: #1f1f1f;
+            --sub: #70757a;
+            --border: #e0e0e0;
+            --error: #ba1a1a;
+            --accent-soft: #f1f3f4;
         }
 
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #121212;
+                --surface: #1e1f20;
+                --primary: #e3e3e3;
+                --text: #e3e3e3;
+                --sub: #9aa0a6;
+                --border: #444746;
+                --accent-soft: #2d2e30;
+            }
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
             margin: 0;
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
 
-        .app-frame {
+        /* Container con transizione di scorrimento laterale tra le viste */
+        .auth-viewport {
             width: 100%;
-            max-width: 450px;
-            padding: 20px 30px;
+            max-width: 420px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
+            padding: 40px 24px;
             position: relative;
         }
 
-        /* --- ANIMAZIONI --- */
-        @keyframes viewEnter {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        /* Animazioni di transizione */
+        .step-section {
+            width: 100%;
+            position: absolute;
+            top: 40px;
+            left: 0;
+            padding: 0 24px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            transform: translateX(30px);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 80px);
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+        .step-section.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
         }
 
-        .step-section { width: 100%; animation: viewEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .shake-anim { animation: shake 0.3s ease-in-out; }
+        .step-section.exit {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
 
-        /* --- LISTA ACCOUNT --- */
-        .account-list {
+        .brand {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        h2 { font-size: 24px; font-weight: 500; margin: 0 0 12px 0; }
+        p { font-size: 16px; color: var(--sub); margin-bottom: 32px; }
+
+        /* Input Moderno */
+        .field-box { position: relative; margin-bottom: 8px; }
+        .field {
+            width: 100%;
+            padding: 20px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .field:focus { border: 2px solid var(--primary); padding: 19px 15px; }
+
+        /* PIN mobile style */
+        .pin-container { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
+        .pin-dot {
+            width: 50px; height: 65px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            text-align: center; font-size: 24px;
+            color: var(--text); outline: none;
+        }
+        .pin-dot:focus { border: 2px solid var(--primary); }
+
+        /* Actions */
+        .footer-actions {
+            margin-top: auto;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin: 15px 0;
-            max-height: 320px;
-            overflow-y: auto;
+            padding-bottom: 20px;
         }
 
-        .account-item {
-            background: var(--card-bg);
-            padding: 14px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            border: 1px solid #222;
+        .btn-full {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 18px;
+            border-radius: 16px;
+            border: none;
+            font-weight: 500;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.1s;
+        }
+        .btn-full:active { transform: scale(0.98); }
+
+        .btn-text {
+            background: transparent;
+            color: var(--text);
+            padding: 12px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
         }
 
-        .account-item:active { transform: scale(0.96); background: #1c1c21; }
-
-        .acc-avatar {
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 15px;
-            border: 2px solid var(--accent);
+        /* Account Card */
+        .acc-row {
+            display: flex; align-items: center;
+            padding: 16px; background: var(--accent-soft);
+            border-radius: 16px; margin-bottom: 12px;
+            cursor: pointer;
         }
+        .acc-img { width: 44px; height: 44px; border-radius: 50%; margin-right: 16px; object-fit: cover; }
+        .acc-name { font-weight: 500; flex: 1; }
 
-        .acc-name { flex-grow: 1; font-size: 18px; font-weight: 600; }
-
-        .acc-remove {
-            width: 40px; height: 40px;
-            display: flex; align-items: center; justify-content: center;
-            color: #444; font-size: 18px;
-            transition: color 0.2s;
+        /* Setup Avatar */
+        .avatar-upload {
+            width: 140px; height: 140px; border-radius: 70px;
+            margin: 20px auto; position: relative;
+            background: var(--accent-soft);
+            overflow: hidden; cursor: pointer;
         }
-        .acc-remove:hover { color: var(--error); }
+        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* --- UI ELEMENTI --- */
-        h2 { font-size: 30px; font-weight: 800; margin: 0 0 10px 0; text-align: center; }
-        p { color: var(--text-sub); text-align: center; margin-bottom: 30px; font-size: 16px; }
-        .highlight-name { color: var(--accent); }
-
-        input[type="text"] {
-            width: 100%; padding: 20px; background: var(--input-bg);
-            border: 1px solid #333; border-radius: 18px; color: white;
-            font-size: 18px; text-align: center; outline: none;
-        }
-
-        .btn {
-            width: 100%; padding: 20px; border: none; border-radius: 18px;
-            background: var(--accent); color: white; font-size: 18px;
-            font-weight: 600; cursor: pointer; margin-top: 10px;
-            box-shadow: 0 8px 25px var(--accent-glow);
-            transition: transform 0.2s;
-        }
-        .btn:active { transform: scale(0.97); }
-        .btn-ghost { background: transparent; border: 1px solid #333; box-shadow: none; color: #888; margin-top: 15px; }
-
-        /* --- PIN --- */
-        .pin-wrapper { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; }
-        .pin-digit {
-            width: 60px; height: 75px; background: var(--input-bg);
-            border: 1px solid #333; border-radius: 16px; font-size: 32px;
-            color: white; text-align: center; outline: none;
-            transition: all 0.3s;
-        }
-        .pin-digit:focus { border-color: var(--accent); transform: translateY(-4px); }
-
-        /* --- WELCOME / AVATAR --- */
-        .welcome-layout { display: flex; flex-direction: column; align-items: center; gap: 25px; padding: 20px 0; }
-        .avatar-main { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); position: relative; cursor: pointer; }
-        .avatar-main img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .pencil-btn { position: absolute; bottom: 5px; right: 5px; background: var(--accent); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid var(--bg-color); color: white; }
-        
-        .login-mini-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; border: 3px solid var(--accent); object-fit: cover; display: block; }
-
-        .hidden { display: none !important; }
-        .error-msg { color: var(--error); text-align: center; height: 20px; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
+        .error { color: var(--error); font-size: 13px; margin-top: 8px; text-align: left; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="app-frame">
+<div class="auth-viewport">
+    <div class="brand"></div>
 
-    <div id="view-accounts" class="step-section hidden">
+    <div id="view-accounts" class="step-section">
         <h2>Bentornato</h2>
-        <p>Seleziona il tuo profilo</p>
-        <div id="account-container" class="account-list"></div>
-        <button class="btn btn-ghost" onclick="changeView('user')">Usa un altro account</button>
+        <p>Scegli un account salvato</p>
+        <div id="account-list"></div>
+        <div class="footer-actions">
+            <button class="btn-text" onclick="showStep('user')">Usa un altro account</button>
+        </div>
     </div>
 
     <div id="view-user" class="step-section">
-        <h2>Benvenuto</h2>
-        <p>Inserisci il tuo nome utente</p>
-        <input type="text" id="inp-username" placeholder="Username" autocomplete="off" maxlength="15">
-        <div id="err-user" class="error-msg"></div>
-        <button class="btn" onclick="processUser()">Continua</button>
-        <button id="btn-back-list" class="btn btn-ghost hidden" onclick="initApp()">Torna alla lista</button>
-    </div>
-
-    <div id="view-pin" class="step-section hidden">
-        <img src="" id="pin-avatar" class="login-mini-avatar hidden">
-        <h2 id="pin-title">PIN</h2>
-        <p id="pin-desc">Inserisci codice</p>
-        <div class="pin-wrapper" id="pin-box">
-            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
-            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        <h2 id="user-title">Accedi</h2>
+        <p id="user-desc">Inserisci il tuo username. Se non esiste, verrà creato un nuovo account.</p>
+        <div class="field-box">
+            <input type="text" id="inp-username" class="field" placeholder="Username" autocomplete="off">
+            <div id="err-user" class="error"></div>
         </div>
-        <div id="err-pin" class="error-msg"></div>
-        <button class="btn" onclick="processPin()">Conferma</button>
-    </div>
-
-    <div id="view-welcome" class="step-section hidden">
-        <div class="welcome-layout">
-            <div style="text-align:center">
-                <h2>Benvenuto, <span id="welcome-name" class="highlight-name">...</span></h2>
-                <p>Configurazione completata!</p>
-            </div>
-            <div class="avatar-main" onclick="document.getElementById('file-input').click()">
-                <img src="" id="welcome-img-preview">
-                <div class="pencil-btn"><i class="fas fa-camera"></i></div>
-            </div>
-            <input type="file" id="file-input" hidden accept="image/*" onchange="handleUpload(this)">
-            <button class="btn" onclick="finalizeSetup(true)" id="btn-final">Continua</button>
+        <div class="footer-actions">
+            <button class="btn-full" onclick="handleUserNext()">Continua</button>
+            <button id="btn-back-accounts" class="btn-text hidden" onclick="showStep('accounts')">Torna agli account</button>
         </div>
     </div>
 
+    <div id="view-pin" class="step-section">
+        <h2 id="pin-title">Sicurezza</h2>
+        <p id="pin-desc">Inserisci il PIN per il tuo account</p>
+        <div class="pin-container">
+            <input type="password" class="pin-dot" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-dot" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-dot" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-dot" maxlength="1" inputmode="numeric">
+        </div>
+        <div id="err-pin" class="error"></div>
+        <div class="footer-actions">
+            <button class="btn-full" onclick="handlePinNext()">Conferma</button>
+            <button class="btn-text" onclick="showStep('user')">Indietro</button>
+        </div>
+    </div>
+
+    <div id="view-setup" class="step-section">
+        <h2>Profilo</h2>
+        <p>Aggiungi una foto al tuo nuovo account</p>
+        <div class="avatar-upload" onclick="document.getElementById('file-input').click()">
+            <img src="" id="setup-preview">
+        </div>
+        <input type="file" id="file-input" hidden accept="image/*" onchange="previewFile(this)">
+        <div class="footer-actions">
+            <button class="btn-full" onclick="finishAll()">Crea Account</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -197,187 +238,121 @@
     const SUPABASE_KEY = 'sb_publishable_tC8Z0ewOX4U1Xh0lST9gKQ_yWLcN67j'; 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+    let state = { username: '', isLogin: false, dbPin: null, tempPin: '', avatarUrl: '' };
+    const pinInputs = document.querySelectorAll('.pin-dot');
 
-    let state = {
-        username: '',
-        isLogin: false,
-        dbPin: null,
-        tempPin: '',
-        avatarUrl: '',
-        hasChangedAvatar: false
-    };
-
-    const pinInputs = document.querySelectorAll('.pin-digit');
-
-    function initApp() {
-        const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
-        if (saved.length > 0) {
-            renderAccounts(saved);
-            changeView('accounts');
-        } else {
-            changeView('user');
-        }
-    }
-
-    function renderAccounts(accounts) {
-        const container = document.getElementById('account-container');
-        container.innerHTML = '';
-        accounts.forEach(acc => {
-            const item = document.createElement('div');
-            item.className = 'account-item';
-            item.innerHTML = `
-                <img src="${acc.avatar}" class="acc-avatar">
-                <div class="acc-name">${acc.username}</div>
-                <div class="acc-remove"><i class="fas fa-times"></i></div>`;
-            
-            item.onclick = (e) => {
-                if (e.target.closest('.acc-remove')) return;
-                handleQuickAccess(acc);
-            };
-
-            item.querySelector('.acc-remove').onclick = (e) => {
-                e.stopPropagation();
-                removeAcc(acc.username);
-            };
-            container.appendChild(item);
+    // --- NAVIGAZIONE FLUIDA ---
+    function showStep(stepId) {
+        document.querySelectorAll('.step-section').forEach(s => {
+            s.classList.remove('active');
+            s.classList.add('exit');
         });
+        const next = document.getElementById('view-' + stepId);
+        setTimeout(() => {
+            document.querySelectorAll('.step-section').forEach(s => s.classList.remove('exit'));
+            next.classList.add('active');
+        }, 50);
+        if(stepId === 'pin') resetPin();
     }
 
-    // LOGICA ACCESSO ISTANTANEO (2 GIORNI)
-    async function handleQuickAccess(acc) {
-        const now = Date.now();
-        const lastPinTime = acc.lastPinTime || 0;
+    // --- LOGICA USERNAME ---
+    async function handleUserNext() {
+        const user = document.getElementById('inp-username').value.trim();
+        if(user.length < 3) return (document.getElementById('err-user').innerText = "Troppo corto");
 
-        state.username = acc.username;
-        state.avatarUrl = acc.avatar;
-        state.isLogin = true;
-
-        if (now - lastPinTime < TWO_DAYS_MS) {
-            // ACCESSO DIRETTO
-            finalizeSetup(false); 
+        const { data } = await sb.from('users').select('*').eq('username', user).maybeSingle();
+        state.username = user;
+        
+        if(data) {
+            state.isLogin = true;
+            state.dbPin = data.pin;
+            state.avatarUrl = data.avatar_url;
+            document.getElementById('pin-title').innerText = "Bentornato";
+            document.getElementById('pin-desc').innerText = "Inserisci il tuo PIN di accesso";
         } else {
-            // RICHIEDI PIN
-            const { data } = await sb.from('users').select('pin').eq('username', acc.username).single();
-            if(data) state.dbPin = data.pin;
-            document.getElementById('pin-avatar').src = acc.avatar;
-            document.getElementById('pin-avatar').classList.remove('hidden');
-            changeView('pin');
+            state.isLogin = false;
+            state.avatarUrl = `https://ui-avatars.com/api/?name=${user}&background=random`;
+            document.getElementById('pin-title').innerText = "Crea PIN";
+            document.getElementById('pin-desc').innerText = "Scegli un codice a 4 cifre per il nuovo account";
         }
+        showStep('pin');
     }
 
-    async function processUser() {
-        const name = document.getElementById('inp-username').value.trim();
-        if(name.length < 3) return showErr('err-user', "Nome corto");
-        try {
-            const { data } = await sb.from('users').select('*').eq('username', name).maybeSingle();
-            state.username = name;
-            if(data) {
-                state.isLogin = true;
-                state.dbPin = data.pin;
-                state.avatarUrl = data.avatar_url || `https://ui-avatars.com/api/?name=${name}`;
-                document.getElementById('pin-avatar').src = state.avatarUrl;
-                document.getElementById('pin-avatar').classList.remove('hidden');
-            } else {
-                state.isLogin = false;
-                state.avatarUrl = `https://api.dicebear.com/9.x/dylan/svg?seed=${name}`;
-                document.getElementById('pin-avatar').classList.add('hidden');
-            }
-            changeView('pin');
-        } catch(e) { showErr('err-user', "Errore connessione"); }
-    }
-
-    function processPin() {
-        let pin = "";
-        pinInputs.forEach(i => pin += i.value);
-        if(pin.length !== 4) return showErr('err-pin', "4 cifre");
+    // --- LOGICA PIN ---
+    function handlePinNext() {
+        let pin = ""; pinInputs.forEach(i => pin += i.value);
+        if(pin.length < 4) return (document.getElementById('err-pin').innerText = "Inserisci 4 cifre");
 
         if(state.isLogin) {
-            if(pin === state.dbPin) {
-                showWelcome();
-            } else {
-                showErr('err-pin', "PIN Errato");
-                document.getElementById('pin-box').classList.add('shake-anim');
-                setTimeout(() => document.getElementById('pin-box').classList.remove('shake-anim'), 400);
-                resetPinFields();
-            }
+            if(pin === state.dbPin) finalizeSession();
+            else { document.getElementById('err-pin').innerText = "PIN Errato"; resetPin(); }
         } else {
             state.tempPin = pin;
-            showWelcome();
+            document.getElementById('setup-preview').src = state.avatarUrl;
+            showStep('setup');
         }
     }
 
-    function showWelcome() {
-        document.getElementById('welcome-name').innerText = state.username;
-        document.getElementById('welcome-img-preview').src = state.avatarUrl;
-        changeView('welcome');
-    }
-
-    async function handleUpload(input) {
+    // --- SETUP AVATAR & FINE ---
+    async function previewFile(input) {
         if (!input.files[0]) return;
         const file = input.files[0];
         const fileName = `avatars/${Date.now()}_${state.username}`;
-        const { data: uploadData } = await sb.storage.from('avatars').upload(fileName, file);
+        await sb.storage.from('avatars').upload(fileName, file);
         const { data } = sb.storage.from('avatars').getPublicUrl(fileName);
         state.avatarUrl = data.publicUrl;
-        state.hasChangedAvatar = true;
-        document.getElementById('welcome-img-preview').src = state.avatarUrl;
+        document.getElementById('setup-preview').src = state.avatarUrl;
     }
 
-    async function finalizeSetup(isNewPinProvided) {
-        if (!state.isLogin) {
-            await sb.from('users').insert([{ username: state.username, pin: state.tempPin, avatar_url: state.avatarUrl }]);
-        } else if (state.hasChangedAvatar) {
-            await sb.from('users').update({ avatar_url: state.avatarUrl }).eq('username', state.username);
-        }
+    async function finishAll() {
+        // Registrazione nuovo utente
+        await sb.from('users').insert([{ username: state.username, pin: state.tempPin, avatar_url: state.avatarUrl }]);
+        finalizeSession();
+    }
 
+    function finalizeSession() {
+        // Salva localmente per lista account e sessione
         let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
-        const existing = accounts.find(a => a.username === state.username);
-        
-        // Se l'utente ha inserito il PIN o è nuovo, aggiorno il timestamp del PIN
-        const lastPinTime = isNewPinProvided ? Date.now() : (existing ? existing.lastPinTime : Date.now());
-
         accounts = accounts.filter(a => a.username !== state.username);
-        accounts.unshift({ 
-            username: state.username, 
-            avatar: state.avatarUrl, 
-            lastPinTime: lastPinTime 
-        });
-        localStorage.setItem('app_accounts', JSON.stringify(accounts.slice(0, 8)));
-
+        accounts.unshift({ username: state.username, avatar: state.avatarUrl, lastPinTime: Date.now() });
+        localStorage.setItem('app_accounts', JSON.stringify(accounts.slice(0, 5)));
+        
         localStorage.setItem('userSession', JSON.stringify({ username: state.username, avatar: state.avatarUrl }));
-        window.location.href = 'dely&fra.html';
+        window.location.href = 'index.html';
     }
 
-    function changeView(view) {
-        document.querySelectorAll('.step-section').forEach(s => s.classList.add('hidden'));
-        document.getElementById('view-' + view).classList.remove('hidden');
-        if(view === 'user') {
-            const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
-            if(saved.length > 0) document.getElementById('btn-back-list').classList.remove('hidden');
-        }
-        if(view === 'pin') {
-            document.getElementById('pin-title').innerText = state.isLogin ? "Bentornato" : "Crea PIN";
-            resetPinFields();
-        }
-    }
-
-    function showErr(id, msg) {
-        const el = document.getElementById(id);
-        el.innerText = msg;
-        setTimeout(() => el.innerText = "", 2500);
-    }
-
-    function resetPinFields() {
-        pinInputs.forEach(i => i.value = '');
-        pinInputs[0].focus();
-    }
+    // --- UTILS ---
+    function resetPin() { pinInputs.forEach(i => i.value = ''); pinInputs[0].focus(); }
 
     function removeAcc(user) {
         let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
         accounts = accounts.filter(a => a.username !== user);
         localStorage.setItem('app_accounts', JSON.stringify(accounts));
         initApp();
+    }
+
+    function initApp() {
+        const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        if(saved.length > 0) {
+            const list = document.getElementById('account-list');
+            list.innerHTML = '';
+            saved.forEach(acc => {
+                const div = document.createElement('div');
+                div.className = 'acc-row';
+                div.innerHTML = `<img src="${acc.avatar}" class="acc-img"><div class="acc-name">${acc.username}</div>`;
+                div.onclick = () => {
+                    state.username = acc.username; state.avatarUrl = acc.avatar; state.isLogin = true;
+                    // Logica 2 giorni bypass PIN
+                    if(Date.now() - acc.lastPinTime < 172800000) finalizeSession();
+                    else showStep('pin');
+                };
+                list.appendChild(div);
+            });
+            document.getElementById('btn-back-accounts').classList.remove('hidden');
+            showStep('accounts');
+        } else {
+            showStep('user');
+        }
     }
 
     pinInputs.forEach((inp, i) => {
@@ -389,3 +364,4 @@
 </script>
 </body>
 </html>
+ 
