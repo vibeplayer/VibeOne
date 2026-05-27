@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Login App Pro</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #050505; 
+            --text-main: #ffffff;
+            --text-sub: #888888;
+            --accent: #3b82f6; 
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --input-bg: #0d0d0f;
+            --card-bg: #0d0d0f;
+            --error: #ef4444;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .app-frame {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- ANIMAZIONI --- */
+        @keyframes viewEnter {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .step-section { width: 100%; animation: viewEnter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .shake-anim { animation: shake 0.3s ease-in-out; }
+
+        /* --- LISTA ACCOUNT --- */
+        .account-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 15px 0;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .account-item {
+            background: var(--card-bg);
+            padding: 14px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #222;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .account-item:active { transform: scale(0.96); background: #1c1c21; }
+
+        .acc-avatar {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 15px;
+            border: 2px solid var(--accent);
+        }
+
+        .acc-name { flex-grow: 1; font-size: 18px; font-weight: 600; }
+
+        .acc-remove {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            color: #444; font-size: 18px;
+            transition: color 0.2s;
+        }
+        .acc-remove:hover { color: var(--error); }
+
+        /* --- UI ELEMENTI --- */
+        h2 { font-size: 30px; font-weight: 800; margin: 0 0 10px 0; text-align: center; }
+        p { color: var(--text-sub); text-align: center; margin-bottom: 30px; font-size: 16px; }
+        .highlight-name { color: var(--accent); }
+
+        input[type="text"] {
+            width: 100%; padding: 20px; background: var(--input-bg);
+            border: 1px solid #333; border-radius: 18px; color: white;
+            font-size: 18px; text-align: center; outline: none;
+        }
+
+        .btn {
+            width: 100%; padding: 20px; border: none; border-radius: 18px;
+            background: var(--accent); color: white; font-size: 18px;
+            font-weight: 600; cursor: pointer; margin-top: 10px;
+            box-shadow: 0 8px 25px var(--accent-glow);
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-ghost { background: transparent; border: 1px solid #333; box-shadow: none; color: #888; margin-top: 15px; }
+
+        /* --- PIN --- */
+        .pin-wrapper { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; }
+        .pin-digit {
+            width: 60px; height: 75px; background: var(--input-bg);
+            border: 1px solid #333; border-radius: 16px; font-size: 32px;
+            color: white; text-align: center; outline: none;
+            transition: all 0.3s;
+        }
+        .pin-digit:focus { border-color: var(--accent); transform: translateY(-4px); }
+
+        /* --- WELCOME / AVATAR --- */
+        .welcome-layout { display: flex; flex-direction: column; align-items: center; gap: 25px; padding: 20px 0; }
+        .avatar-main { width: 160px; height: 160px; border-radius: 50%; border: 4px solid var(--accent); position: relative; cursor: pointer; }
+        .avatar-main img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .pencil-btn { position: absolute; bottom: 5px; right: 5px; background: var(--accent); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 4px solid var(--bg-color); color: white; }
+        
+        .login-mini-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; border: 3px solid var(--accent); object-fit: cover; display: block; }
+
+        .hidden { display: none !important; }
+        .error-msg { color: var(--error); text-align: center; height: 20px; margin-bottom: 10px; font-size: 14px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="app-frame">
+
+    <div id="view-accounts" class="step-section hidden">
+        <h2>Bentornato</h2>
+        <p>Seleziona il tuo profilo</p>
+        <div id="account-container" class="account-list"></div>
+        <button class="btn btn-ghost" onclick="changeView('user')">Usa un altro account</button>
+    </div>
+
+    <div id="view-user" class="step-section">
+        <h2>Benvenuto</h2>
+        <p>Inserisci il tuo nome utente</p>
+        <input type="text" id="inp-username" placeholder="Username" autocomplete="off" maxlength="15">
+        <div id="err-user" class="error-msg"></div>
+        <button class="btn" onclick="processUser()">Continua</button>
+        <button id="btn-back-list" class="btn btn-ghost hidden" onclick="initApp()">Torna alla lista</button>
+    </div>
+
+    <div id="view-pin" class="step-section hidden">
+        <img src="" id="pin-avatar" class="login-mini-avatar hidden">
+        <h2 id="pin-title">PIN</h2>
+        <p id="pin-desc">Inserisci codice</p>
+        <div class="pin-wrapper" id="pin-box">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+            <input type="password" class="pin-digit" maxlength="1" inputmode="numeric">
+        </div>
+        <div id="err-pin" class="error-msg"></div>
+        <button class="btn" onclick="processPin()">Conferma</button>
+    </div>
+
+    <div id="view-welcome" class="step-section hidden">
+        <div class="welcome-layout">
+            <div style="text-align:center">
+                <h2>Benvenuto, <span id="welcome-name" class="highlight-name">...</span></h2>
+                <p>Configurazione completata!</p>
+            </div>
+            <div class="avatar-main" onclick="document.getElementById('file-input').click()">
+                <img src="" id="welcome-img-preview">
+                <div class="pencil-btn"><i class="fas fa-camera"></i></div>
+            </div>
+            <input type="file" id="file-input" hidden accept="image/*" onchange="handleUpload(this)">
+            <button class="btn" onclick="finalizeSetup(true)" id="btn-final">Continua</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://mgofkzcnppsydkknbuhw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_tC8Z0ewOX4U1Xh0lST9gKQ_yWLcN67j'; 
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+
+    let state = {
+        username: '',
+        isLogin: false,
+        dbPin: null,
+        tempPin: '',
+        avatarUrl: '',
+        hasChangedAvatar: false
+    };
+
+    const pinInputs = document.querySelectorAll('.pin-digit');
+
+    function initApp() {
+        const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        if (saved.length > 0) {
+            renderAccounts(saved);
+            changeView('accounts');
+        } else {
+            changeView('user');
+        }
+    }
+
+    function renderAccounts(accounts) {
+        const container = document.getElementById('account-container');
+        container.innerHTML = '';
+        accounts.forEach(acc => {
+            const item = document.createElement('div');
+            item.className = 'account-item';
+            item.innerHTML = `
+                <img src="${acc.avatar}" class="acc-avatar">
+                <div class="acc-name">${acc.username}</div>
+                <div class="acc-remove"><i class="fas fa-times"></i></div>`;
+            
+            item.onclick = (e) => {
+                if (e.target.closest('.acc-remove')) return;
+                handleQuickAccess(acc);
+            };
+
+            item.querySelector('.acc-remove').onclick = (e) => {
+                e.stopPropagation();
+                removeAcc(acc.username);
+            };
+            container.appendChild(item);
+        });
+    }
+
+    // LOGICA ACCESSO ISTANTANEO (2 GIORNI)
+    async function handleQuickAccess(acc) {
+        const now = Date.now();
+        const lastPinTime = acc.lastPinTime || 0;
+
+        state.username = acc.username;
+        state.avatarUrl = acc.avatar;
+        state.isLogin = true;
+
+        if (now - lastPinTime < TWO_DAYS_MS) {
+            // ACCESSO DIRETTO
+            finalizeSetup(false); 
+        } else {
+            // RICHIEDI PIN
+            const { data } = await sb.from('users').select('pin').eq('username', acc.username).single();
+            if(data) state.dbPin = data.pin;
+            document.getElementById('pin-avatar').src = acc.avatar;
+            document.getElementById('pin-avatar').classList.remove('hidden');
+            changeView('pin');
+        }
+    }
+
+    async function processUser() {
+        const name = document.getElementById('inp-username').value.trim();
+        if(name.length < 3) return showErr('err-user', "Nome corto");
+        try {
+            const { data } = await sb.from('users').select('*').eq('username', name).maybeSingle();
+            state.username = name;
+            if(data) {
+                state.isLogin = true;
+                state.dbPin = data.pin;
+                state.avatarUrl = data.avatar_url || `https://ui-avatars.com/api/?name=${name}`;
+                document.getElementById('pin-avatar').src = state.avatarUrl;
+                document.getElementById('pin-avatar').classList.remove('hidden');
+            } else {
+                state.isLogin = false;
+                state.avatarUrl = `https://api.dicebear.com/9.x/dylan/svg?seed=${name}`;
+                document.getElementById('pin-avatar').classList.add('hidden');
+            }
+            changeView('pin');
+        } catch(e) { showErr('err-user', "Errore connessione"); }
+    }
+
+    function processPin() {
+        let pin = "";
+        pinInputs.forEach(i => pin += i.value);
+        if(pin.length !== 4) return showErr('err-pin', "4 cifre");
+
+        if(state.isLogin) {
+            if(pin === state.dbPin) {
+                showWelcome();
+            } else {
+                showErr('err-pin', "PIN Errato");
+                document.getElementById('pin-box').classList.add('shake-anim');
+                setTimeout(() => document.getElementById('pin-box').classList.remove('shake-anim'), 400);
+                resetPinFields();
+            }
+        } else {
+            state.tempPin = pin;
+            showWelcome();
+        }
+    }
+
+    function showWelcome() {
+        document.getElementById('welcome-name').innerText = state.username;
+        document.getElementById('welcome-img-preview').src = state.avatarUrl;
+        changeView('welcome');
+    }
+
+    async function handleUpload(input) {
+        if (!input.files[0]) return;
+        const file = input.files[0];
+        const fileName = `avatars/${Date.now()}_${state.username}`;
+        const { data: uploadData } = await sb.storage.from('avatars').upload(fileName, file);
+        const { data } = sb.storage.from('avatars').getPublicUrl(fileName);
+        state.avatarUrl = data.publicUrl;
+        state.hasChangedAvatar = true;
+        document.getElementById('welcome-img-preview').src = state.avatarUrl;
+    }
+
+    async function finalizeSetup(isNewPinProvided) {
+        if (!state.isLogin) {
+            await sb.from('users').insert([{ username: state.username, pin: state.tempPin, avatar_url: state.avatarUrl }]);
+        } else if (state.hasChangedAvatar) {
+            await sb.from('users').update({ avatar_url: state.avatarUrl }).eq('username', state.username);
+        }
+
+        let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        const existing = accounts.find(a => a.username === state.username);
+        
+        // Se l'utente ha inserito il PIN o è nuovo, aggiorno il timestamp del PIN
+        const lastPinTime = isNewPinProvided ? Date.now() : (existing ? existing.lastPinTime : Date.now());
+
+        accounts = accounts.filter(a => a.username !== state.username);
+        accounts.unshift({ 
+            username: state.username, 
+            avatar: state.avatarUrl, 
+            lastPinTime: lastPinTime 
+        });
+        localStorage.setItem('app_accounts', JSON.stringify(accounts.slice(0, 8)));
+
+        localStorage.setItem('userSession', JSON.stringify({ username: state.username, avatar: state.avatarUrl }));
+        window.location.href = 'dely&fra.html';
+    }
+
+    function changeView(view) {
+        document.querySelectorAll('.step-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('view-' + view).classList.remove('hidden');
+        if(view === 'user') {
+            const saved = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+            if(saved.length > 0) document.getElementById('btn-back-list').classList.remove('hidden');
+        }
+        if(view === 'pin') {
+            document.getElementById('pin-title').innerText = state.isLogin ? "Bentornato" : "Crea PIN";
+            resetPinFields();
+        }
+    }
+
+    function showErr(id, msg) {
+        const el = document.getElementById(id);
+        el.innerText = msg;
+        setTimeout(() => el.innerText = "", 2500);
+    }
+
+    function resetPinFields() {
+        pinInputs.forEach(i => i.value = '');
+        pinInputs[0].focus();
+    }
+
+    function removeAcc(user) {
+        let accounts = JSON.parse(localStorage.getItem('app_accounts') || '[]');
+        accounts = accounts.filter(a => a.username !== user);
+        localStorage.setItem('app_accounts', JSON.stringify(accounts));
+        initApp();
+    }
+
+    pinInputs.forEach((inp, i) => {
+        inp.addEventListener('input', (e) => { if(e.target.value && i < 3) pinInputs[i+1].focus(); });
+        inp.addEventListener('keydown', (e) => { if(e.key === 'Backspace' && !e.target.value && i > 0) pinInputs[i-1].focus(); });
+    });
+
+    initApp();
+</script>
+</body>
+</html>
