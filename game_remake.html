@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Mini Golf 3D — Remake Engine</title>
+<style>
+:root{--bg:#061219;--ui:#0e1620;--accent:#4fc3f7;--accent-2:#81c784;--muted:#98a0a6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto;overflow:hidden}
+canvas{display:block}
+/* Minimal modern HUD */
+.hud{position:fixed;left:18px;top:18px;z-index:20;display:flex;gap:12px;align-items:center}
+.hud .chip{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:10px;padding:10px 14px;backdrop-filter: blur(6px);box-shadow:0 6px 18px rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:flex-start}
+.hud .chip .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.hud .chip .value{font-weight:800;font-size:22px;margin-top:4px}
+.center-hint{position:fixed;left:50%;transform:translateX(-50%);bottom:32px;background:linear-gradient(90deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));padding:10px 16px;border-radius:999px;font-weight:700;color:#fff;backdrop-filter: blur(6px);z-index:20}
+.win-card{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:30}
+.win-card .card{background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));padding:28px;border-radius:12px;min-width:320px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,0.7)}
+.win-card.show{display:flex}
+.controls-overlay{position:fixed;right:18px;bottom:18px;z-index:20;display:flex;flex-direction:column;gap:10px}
+.btn{background:var(--ui);padding:10px 14px;border-radius:10px;font-weight:800;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,0.04)}
+.small{font-size:12px}
+</style>
+</head>
+<body>
+<div id="app-root"></div>
+<div class="hud" id="hud">
+  <div class="chip"><div class="label">Livello</div><div class="value" id="hud-level">1</div></div>
+  <div class="chip"><div class="label">Tiri</div><div class="value" id="hud-strokes">0</div></div>
+</div>
+<div class="center-hint" id="hint">Trascina o tocca e tira</div>
+<div class="controls-overlay">
+  <div class="btn small" id="btn-replay">Gioca ancora</div>
+  <div class="btn small" id="btn-menu">Menu</div>
+</div>
+<div class="win-card" id="winCard"><div class="card"><h1 id="winTitle">Buca!</h1><p id="winText">Completato</p><div style="height:12px"></div><div style="display:flex;gap:10px;justify-content:center"><div class="btn" id="nextBtn">Prossimo</div><div class="btn" id="closeBtn">Chiudi</div></div></div></div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+
+/*
+  Remake engine: 
+  - Mantiene le funzioni principali (input->shot, fisica palla, livello, buca) per facilitare l'integrazione col menu esistente.
+  - Migliora UX/graphics: HUD minimale, smoother camera, touch-friendly controls, ottimizzazioni.
+  - Espone API: window.DJGolfRemake.init(opts)
+
+  Nota: Questo file è un'implementazione più compatta e modulare rispetto a game.html; usa principi simili
+  senza alterare i file di menu esistenti.
+*/
+
+// Config semplificata
+const CONFIG = {
+  BALL_R:0.2,
+  START_Z:34,
+  HOLE_X:0, HOLE_Z:-30,
+  FWL:80, FW:32,
+  GRAVITY:14,
+  SHOT_MIN:1.8, SHOT_MAX:12,
+}
+
+let canvas, renderer, scene, camera;
+let ball, holeGroup;
+let vel = new THREE.Vector3();
+let isMoving=false, ballInAir=false, strokes=0, won=false;
+let aimActive=false, dragStart=null;
+
+// Lightweight scene builder
+function setupScene(){
+  if(!canvas){
+    canvas = document.createElement('canvas');
+    canvas.style.position='fixed';canvas.style.inset='0';canvas.style.zIndex='0';
+    document.body.appendChild(canvas);
+  }
+  renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  onResize();
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(58,innerWidth/innerHeight,0.1,200);
+
+  // Simple ambient + sun
+  scene.add(new THREE.AmbientLight(0xffffff,0.9));
+  const sun = new THREE.DirectionalLight(0xfff7d9,1.2); sun.position.set(30,40,10); sun.castShadow=true; scene.add(sun);
+
+  // Ground (simple mesh with height function compatibility)
+  const groundMat = new THREE.MeshStandardMaterial({color:0x0c270e,roughness:0.95});
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(400,400,1,1), groundMat); g.rotation.x=-Math.PI/2; g.position.y=-2.4; scene.add(g);
+
+  // Ball
+  const ballMat = new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.2,metalness:0.1});
+  ball = new THREE.Mesh(new THREE.SphereGeometry(CONFIG.BALL_R,24,24), ballMat); ball.castShadow=false; scene.add(ball);
+
+  // Hole
+  holeGroup = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.4,0.04,16,48), new THREE.MeshStandardMaterial({color:0xdddddd,metalness:1,roughness:0.05}));
+  ring.rotation.x=-Math.PI/2; holeGroup.add(ring); scene.add(holeGroup);
+
+  // Camera reasonable position
+  camera.position.set(0,12,18); camera.lookAt(0,0,0);
+
+  window.addEventListener('resize', onResize);
+}
+
+function onResize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w,h); if(camera) { camera.aspect = w/h; camera.updateProjectionMatrix(); }
+}
+
+function setInitialPositions(){
+  const startY = getHeight(0, CONFIG.START_Z) + CONFIG.BALL_R + 0.05;
+  ball.position.set(0, startY, CONFIG.START_Z);
+  holeGroup.position.set(CONFIG.HOLE_X, getHeight(CONFIG.HOLE_X, CONFIG.HOLE_Z), CONFIG.HOLE_Z);
+}
+
+// Keep a simple analytic terrain function compatible with original
+function getHeight(x,z){
+  // Reuse a gentle wavy heightmap similar to level 1
+  const tz = z / CONFIG.FWL; const tx = x / CONFIG.FW;
+  return Math.max(-2.2 + Math.sin(tz*Math.PI*0.7)*0.45 + Math.cos(tz*Math.PI*0.3)*0.18 + Math.sin(tx*Math.PI*0.4)*0.10, -1.0);
+}
+
+// Input handling (touch/mouse) — unified
+function toLocalPoint(e){ return new THREE.Vector2(e.clientX || (e.touches && e.touches[0].clientX), e.clientY || (e.touches && e.touches[0].clientY)); }
+
+window.addEventListener('pointerdown', (e)=>{
+  if(isMoving || won) return;
+  dragStart = toLocalPoint(e); aimActive = false; hideHint();
+});
+window.addEventListener('pointermove', (e)=>{
+  if(!dragStart) return;
+  const p = toLocalPoint(e); const d = new THREE.Vector2().subVectors(dragStart, p); const len = d.length();
+  if(len < 16){ aimActive = false; return; }
+  aimActive = true;
+});
+window.addEventListener('pointerup', (e)=>{
+  if(!dragStart) return; const p = toLocalPoint(e); const d = new THREE.Vector2().subVectors(dragStart, p); const px = d.length();
+  dragStart = null; if(px < 10){ showHint(); return; }
+  // compute shot
+  const power = Math.min(px / 210, 1);
+  const totalSpd = CONFIG.SHOT_MIN + (CONFIG.SHOT_MAX - CONFIG.SHOT_MIN) * Math.pow(power, 1.4);
+  const dirX = d.x / px, dirZ = d.y / px;
+  vel.set(dirX * totalSpd, totalSpd * 0.12, dirZ * totalSpd);
+  ballInAir = true; isMoving = true; strokes++;
+  document.getElementById('hud-strokes').textContent = strokes;
+});
+
+function showHint(){ const el = document.getElementById('hint'); el.style.opacity='1'; el.style.transform='translateY(0)'; }
+function hideHint(){ const el = document.getElementById('hint'); el.style.opacity='0'; el.style.transform='translateY(8px)'; }
+
+// Simple physics, few substeps
+function physicsStep(dt){
+  if(!isMoving || won) return;
+  const sub = 6; const subDt = dt / sub;
+  for(let i=0;i<sub;i++){
+    // gravity
+    vel.y -= CONFIG.GRAVITY * subDt;
+    ball.position.addScaledVector(vel, subDt);
+    // ground collision
+    const floor = getHeight(ball.position.x, ball.position.z) + CONFIG.BALL_R;
+    if(ball.position.y <= floor){
+      ball.position.y = floor; if(Math.abs(vel.y) > 1.0){ vel.y = Math.abs(vel.y) * 0.18; vel.multiplyScalar(0.85); }
+      else{ vel.y = 0; ballInAir = false; vel.x *= 0.75; vel.z *= 0.75; }
+    }
+    // simple friction
+    if(!ballInAir){ vel.x *= Math.pow(0.985, subDt*60); vel.z *= Math.pow(0.985, subDt*60); }
+    // stop
+    if(!ballInAir && vel.lengthSq() < 0.0009){ vel.set(0,0,0); isMoving=false; }
+    // check hole
+    const dx = ball.position.x - CONFIG.HOLE_X, dz = ball.position.z - CONFIG.HOLE_Z; if(!ballInAir && Math.sqrt(dx*dx+dz*dz) < 0.43){ onHole(); return; }
+  }
+}
+
+function onHole(){ won = true; isMoving = false; vel.set(0,0,0); // animate sink
+  document.getElementById('winText').textContent = `Completato in ${strokes} ${strokes===1? 'tiro':'tiri'}`;
+  document.getElementById('winCard').classList.add('show');
+}
+
+// Camera smoothing
+let camPos = new THREE.Vector3(0,12,18), camLook = new THREE.Vector3(0,0,0);
+function updateCamera(dt){
+  const target = new THREE.Vector3(ball.position.x*0.12, ball.position.y + 10, ball.position.z + 16);
+  camPos.lerp(target, 0.06);
+  camLook.lerp(new THREE.Vector3(ball.position.x, ball.position.y + 0.4, ball.position.z - 2), 0.1);
+  camera.position.copy(camPos); camera.lookAt(camLook);
+}
+
+// Render loop
+const clock = new THREE.Clock();
+function animate(){ requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  physicsStep(dt); updateCamera(dt);
+  renderer.render(scene, camera);
+}
+
+// Public API
+window.DJGolfRemake = {
+  init(opts={}){
+    setupScene(); setInitialPositions(); strokes = 0; won=false; isMoving=false; ballInAir=false; document.getElementById('hud-level').textContent = opts.level || 1; document.getElementById('hud-strokes').textContent = '0';
+    hideHint(); animate();
+  },
+  reset(){ setInitialPositions(); vel.set(0,0,0); isMoving=false; ballInAir=false; strokes=0; document.getElementById('hud-strokes').textContent='0'; document.getElementById('winCard').classList.remove('show'); }
+}
+
+// UI buttons
+document.getElementById('btn-replay').addEventListener('click', ()=>{ window.DJGolfRemake.reset(); });
+document.getElementById('btn-menu').addEventListener('click', ()=>{ window.location.href = 'menu.html'; });
+document.getElementById('nextBtn').addEventListener('click', ()=>{ /* placeholder: integrate level advance externally */ window.DJGolfRemake.reset(); document.getElementById('winCard').classList.remove('show'); });
+document.getElementById('closeBtn').addEventListener('click', ()=>{ document.getElementById('winCard').classList.remove('show'); });
+
+// Auto-init with defaults so menu can simply open this page
+window.addEventListener('load', ()=>{ window.DJGolfRemake.init({level:1}); });
+
+</script>
+</body>
+</html>
